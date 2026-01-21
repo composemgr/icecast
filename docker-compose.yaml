@@ -1,0 +1,121 @@
+# nginx proxy address - http://172.17.0.1:60236
+
+name: icecast
+x-logging: &default-logging
+  options:
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
+
+x-ices0: &ices-environment
+  STREAM_VERBOSE: 1
+  STREAM_PRIVATE: 0
+  STREAM_RANDOMIZE: 0
+  STREAM_BITRATE: 320
+  STREAM_CROSSFADE: 2
+  STREAM_REENCODED: 0
+  STREAM_BACKGROUND: 0
+  STREAM_PLAYLIST_TYPE: builtin
+  STREAM_INTERPRETER_MODULE: ices
+  STREAM_REENCODED_CHANNELS: 2
+  STREAM_REENCODED_SAMPLERATE: 44100
+  STREAM_MEDIA_FOLDER: /media
+  STREAM_CONFIG: /ices/ices.conf
+  STREAM_PLAYLIST: /ices/playlist.txt
+  PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+x-env-file: &env_file
+  - .env
+  - app.env
+
+x-environment: &default-environment
+  LANG: C.UTF-8
+  LC_ALL: C.UTF-8
+  LANGUAGE: C.UTF-8
+  STREAM_PORT: 8000
+  STREAM_HOST: server
+  STREAM_PROTOCOL: http
+  TZ: ${TZ:-America/New_York}
+  ICECAST_HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
+  STREAM_PASSWORD: ${APP_SECRET_KEY:-changeme_stream_password}
+  ICECAST_RELAY_PASSWORD: ${APP_SECRET_KEY:-changeme_stream_password}
+  ICECAST_SOURCE_PASSWORD: ${APP_SECRET_KEY:-changeme_stream_password}
+
+services:
+  server:
+    image: libretime/icecast:latest
+    container_name: icecast-server
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
+    pull_policy: always
+    logging: *default-logging
+    env_file: *env_file
+    environment:
+      <<: *default-environment
+      ICECAST_MAX_CLIENTS: 9999999999
+      ICECAST_MAX_SOURCES: 9999999999
+      ICECAST_LOCATION: ${ICECAST_LOCATION:-USA}
+      ICECAST_ADMIN_USERNAME: ${APP_ADMIN_USER:-admin}
+      ICECAST_ADMIN_EMAIL=${APP_ADMIN_USER:-admin}@${BASE_DOMAIN_NAME:-${BASE_HOST_NAME}}
+      ICECAST_ADMIN_PASSWORD: ${APP_ADMIN_PASS:-changeme_admin_password}
+    ports:
+      - '172.17.0.1:61025:8000'
+    healthcheck:
+      test: timeout 10s bash -c ':> /dev/tcp/127.0.0.1/8000' || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+    networks:
+      - icecast
+
+  music:
+    image: zerg13/ices:latest
+    container_name: icecast-music
+    hostname: music
+    restart: always
+    pull_policy: always
+    logging: *default-logging
+    env_file: *env_file
+    environment:
+      <<: [*default-environment, *ices-environment]
+      STREAM_MOUNTPOINT: /music
+      STREAM_NAME: Music
+      STREAM_GENRE: Various
+      STREAM_DESCRIPTION: $APP_ORG_NAME Music
+      STREAM_URL: https://${ICECAST_HOSTNAME:-$BASE_HOST_NAME}/music
+    volumes:
+      - './rootfs/data/media/music:/media'
+    depends_on:
+      server:
+        condition: service_healthy
+    networks:
+      - icecast
+
+  nightcore:
+    image: zerg13/ices:latest
+    container_name: icecast-nightcore
+    hostname: nightcore
+    restart: always
+    pull_policy: always
+    logging: *default-logging
+    env_file: *env_file
+    environment:
+      <<: [*default-environment, *ices-environment]
+      STREAM_MOUNTPOINT: /nightcore
+      STREAM_NAME: NightCore
+      STREAM_GENRE: NightCore
+      STREAM_DESCRIPTION: $APP_ORG_NAME nightcore
+      STREAM_URL: https://${ICECAST_HOSTNAME:-$BASE_HOST_NAME}/nightcore
+    volumes:
+      - './rootfs/data/media/nightcore:/media'
+    depends_on:
+      server:
+        condition: service_healthy
+    networks:
+      - icecast
+
+networks:
+  icecast:
+    name: icecast
+    external: false
