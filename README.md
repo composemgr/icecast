@@ -41,8 +41,8 @@ BASE_DOMAIN_NAME=
 
 ## 📂 Volumes
 
-- `./rootfs/config/icecast` - Configuration files
-- `./rootfs/data/icecast` - Application data
+- `./volumes/config/icecast` - Configuration files
+- `./volumes/data/icecast` - Application data
 
 ## 🔐 Security
 
