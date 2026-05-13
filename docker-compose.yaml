@@ -1,4 +1,4 @@
-# nginx proxy address - http://172.17.0.1:60236
+# nginx proxy address - http://172.17.0.1:61025
 
 name: icecast
 x-logging: &default-logging
@@ -58,6 +58,8 @@ services:
       ICECAST_ADMIN_USERNAME: ${APP_ADMIN_USER:-admin}
       ICECAST_ADMIN_EMAIL: ${APP_ADMIN_USER:-admin}@${BASE_DOMAIN_NAME:-${BASE_HOST_NAME:-localhost}}
       ICECAST_ADMIN_PASSWORD: ${APP_ADMIN_PASS:-changeme_admin_password}
+      CONTAINER_NAME: icecast-server
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
     ports:
       - '172.17.0.1:61025:8000'
     healthcheck:
@@ -68,6 +70,24 @@ services:
       start_period: 90s
     networks:
       - icecast
+      - proxy
+      - cloudflare
+    labels:
+      - 'traefik.enable=true'
+      - 'cloudflare.enable=true'
+      - 'traefik.docker.network=proxy'
+      - 'cloudflare.service=http://icecast-server:8000'
+      - 'cloudflare.hostname=icecast.${CLOUDFLARE_ZONE_NAME:-}'
+      - 'traefik.http.routers.icecast-server.entrypoints=http'
+      - 'traefik.http.routers.icecast-server-secure.tls=true'
+      - 'traefik.http.routers.icecast-server.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.middlewares.icecast-server-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.routers.icecast-server.middlewares=icecast-server-https-redirect'
+      - 'traefik.http.routers.icecast-server-secure.entrypoints=https'
+      - 'traefik.http.routers.icecast-server-secure.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.routers.icecast-server-secure.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.icecast-server-secure.service=icecast-server'
+      - 'traefik.http.services.icecast-server.loadbalancer.server.port=8000'
 
   music:
     image: zerg13/ices:latest
@@ -84,6 +104,7 @@ services:
       STREAM_GENRE: Various
       STREAM_DESCRIPTION: ${APP_ORG_NAME:-MyOrg} Music
       STREAM_URL: https://${ICECAST_HOSTNAME:-${BASE_HOST_NAME:-localhost}}/music
+      CONTAINER_NAME: icecast-music
     volumes:
       - './volumes/data/media/music:/media'
     depends_on:
@@ -107,6 +128,7 @@ services:
       STREAM_GENRE: NightCore
       STREAM_DESCRIPTION: ${APP_ORG_NAME:-MyOrg} nightcore
       STREAM_URL: https://${ICECAST_HOSTNAME:-${BASE_HOST_NAME:-localhost}}/nightcore
+      CONTAINER_NAME: icecast-nightcore
     volumes:
       - './volumes/data/media/nightcore:/media'
     depends_on:
@@ -119,3 +141,7 @@ networks:
   icecast:
     name: icecast
     external: false
+  proxy:
+    external: true
+  cloudflare:
+    external: true
