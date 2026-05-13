@@ -36,7 +36,7 @@ x-environment: &default-environment
   STREAM_HOST: server
   STREAM_PROTOCOL: http
   TZ: ${TZ:-America/New_York}
-  ICECAST_HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
+  ICECAST_HOSTNAME: ${BASE_HOST_NAME:-localhost}
   STREAM_PASSWORD: ${APP_SECRET_KEY:-changeme_stream_password}
   ICECAST_RELAY_PASSWORD: ${APP_SECRET_KEY:-changeme_stream_password}
   ICECAST_SOURCE_PASSWORD: ${APP_SECRET_KEY:-changeme_stream_password}
@@ -56,7 +56,7 @@ services:
       ICECAST_MAX_SOURCES: 9999999999
       ICECAST_LOCATION: ${ICECAST_LOCATION:-USA}
       ICECAST_ADMIN_USERNAME: ${APP_ADMIN_USER:-admin}
-      ICECAST_ADMIN_EMAIL=${APP_ADMIN_USER:-admin}@${BASE_DOMAIN_NAME:-${BASE_HOST_NAME}}
+      ICECAST_ADMIN_EMAIL: ${APP_ADMIN_USER:-admin}@${BASE_DOMAIN_NAME:-${BASE_HOST_NAME:-localhost}}
       ICECAST_ADMIN_PASSWORD: ${APP_ADMIN_PASS:-changeme_admin_password}
     ports:
       - '172.17.0.1:61025:8000'
@@ -82,8 +82,8 @@ services:
       STREAM_MOUNTPOINT: /music
       STREAM_NAME: Music
       STREAM_GENRE: Various
-      STREAM_DESCRIPTION: $APP_ORG_NAME Music
-      STREAM_URL: https://${ICECAST_HOSTNAME:-$BASE_HOST_NAME}/music
+      STREAM_DESCRIPTION: ${APP_ORG_NAME:-MyOrg} Music
+      STREAM_URL: https://${ICECAST_HOSTNAME:-${BASE_HOST_NAME:-localhost}}/music
     volumes:
       - './volumes/data/media/music:/media'
     depends_on:
@@ -105,8 +105,8 @@ services:
       STREAM_MOUNTPOINT: /nightcore
       STREAM_NAME: NightCore
       STREAM_GENRE: NightCore
-      STREAM_DESCRIPTION: $APP_ORG_NAME nightcore
-      STREAM_URL: https://${ICECAST_HOSTNAME:-$BASE_HOST_NAME}/nightcore
+      STREAM_DESCRIPTION: ${APP_ORG_NAME:-MyOrg} nightcore
+      STREAM_URL: https://${ICECAST_HOSTNAME:-${BASE_HOST_NAME:-localhost}}/nightcore
     volumes:
       - './volumes/data/media/nightcore:/media'
     depends_on:
