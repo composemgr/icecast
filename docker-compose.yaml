@@ -90,7 +90,7 @@ services:
       - 'traefik.http.services.icecast-server.loadbalancer.server.port=8000'
 
   music:
-    image: zerg13/ices:latest
+    image: ghcr.io/binmgr/ices0:latest
     container_name: icecast-music
     hostname: music
     restart: always
@@ -114,7 +114,7 @@ services:
       - icecast
 
   nightcore:
-    image: zerg13/ices:latest
+    image: ghcr.io/binmgr/ices0:latest
     container_name: icecast-nightcore
     hostname: nightcore
     restart: always
