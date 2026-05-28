@@ -70,24 +70,6 @@ services:
       start_period: 90s
     networks:
       - icecast
-      - proxy
-      - cloudflare
-    labels:
-      - 'traefik.enable=true'
-      - 'cloudflare.enable=true'
-      - 'traefik.docker.network=proxy'
-      - 'cloudflare.service=http://icecast-server:8000'
-      - 'cloudflare.hostname=icecast.${CLOUDFLARE_ZONE_NAME:-}'
-      - 'traefik.http.routers.icecast-server.entrypoints=http'
-      - 'traefik.http.routers.icecast-server-secure.tls=true'
-      - 'traefik.http.routers.icecast-server.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
-      - 'traefik.http.middlewares.icecast-server-https-redirect.redirectscheme.scheme=https'
-      - 'traefik.http.routers.icecast-server.middlewares=icecast-server-https-redirect'
-      - 'traefik.http.routers.icecast-server-secure.entrypoints=https'
-      - 'traefik.http.routers.icecast-server-secure.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
-      - 'traefik.http.routers.icecast-server-secure.tls.certresolver=cloudflare'
-      - 'traefik.http.routers.icecast-server-secure.service=icecast-server'
-      - 'traefik.http.services.icecast-server.loadbalancer.server.port=8000'
 
   music:
     image: ghcr.io/binmgr/ices0:latest
@@ -106,7 +88,7 @@ services:
       STREAM_URL: https://${ICECAST_HOSTNAME:-${BASE_HOST_NAME:-localhost}}/music
       CONTAINER_NAME: icecast-music
     volumes:
-      - './volumes/data/media/music:/media'
+      - '/mnt/Music/Mp3:/media:ro'
     depends_on:
       server:
         condition: service_healthy
@@ -130,7 +112,7 @@ services:
       STREAM_URL: https://${ICECAST_HOSTNAME:-${BASE_HOST_NAME:-localhost}}/nightcore
       CONTAINER_NAME: icecast-nightcore
     volumes:
-      - './volumes/data/media/nightcore:/media'
+      - '/mnt/Music/Nightcore:/media:ro'
     depends_on:
       server:
         condition: service_healthy
@@ -141,7 +123,3 @@ networks:
   icecast:
     name: icecast
     external: false
-  proxy:
-    external: true
-  cloudflare:
-    external: true
