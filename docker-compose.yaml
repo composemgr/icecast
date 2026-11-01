@@ -1,5 +1,4 @@
-# nginx proxy address - http://172.17.0.1:61025
-
+# nginx proxy address - http://172.17.0.1:64206
 name: icecast
 x-logging: &default-logging
   options:
@@ -24,10 +23,6 @@ x-ices0: &ices-environment
   STREAM_PLAYLIST: /ices/playlist.txt
   PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
-x-env-file: &env_file
-  - .env
-  - app.env
-
 x-environment: &default-environment
   LANG: C.UTF-8
   LC_ALL: C.UTF-8
@@ -45,11 +40,11 @@ services:
   server:
     image: libretime/icecast:latest
     container_name: icecast-server
+    domainname: ${BASE_DOMAIN_NAME:-example.com}
     hostname: ${BASE_HOST_NAME:-$HOSTNAME}
     restart: always
     pull_policy: always
     logging: *default-logging
-    env_file: *env_file
     environment:
       <<: *default-environment
       ICECAST_MAX_CLIENTS: 9999999999
@@ -60,25 +55,24 @@ services:
       ICECAST_ADMIN_PASSWORD: ${APP_ADMIN_PASS:-changeme_admin_password}
       CONTAINER_NAME: icecast-server
       HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
-    ports:
-      - '172.17.0.1:61025:8000'
     healthcheck:
-      test: timeout 10s bash -c ':> /dev/tcp/127.0.0.1/8000' || exit 1
+      test: ['CMD-SHELL', 'timeout 10s bash -c ":> /dev/tcp/127.0.0.1/8000" || exit 1']
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 90s
+    ports:
+      - '172.17.0.1:64206:8000'
     networks:
       - icecast
-
   music:
     image: ghcr.io/binmgr/ices0:latest
     container_name: icecast-music
+    domainname: ${BASE_DOMAIN_NAME:-example.com}
     hostname: music
     restart: always
     pull_policy: always
     logging: *default-logging
-    env_file: *env_file
     environment:
       <<: [*default-environment, *ices-environment]
       STREAM_MOUNTPOINT: /music
@@ -98,11 +92,11 @@ services:
   nightcore:
     image: ghcr.io/binmgr/ices0:latest
     container_name: icecast-nightcore
+    domainname: ${BASE_DOMAIN_NAME:-example.com}
     hostname: nightcore
     restart: always
     pull_policy: always
     logging: *default-logging
-    env_file: *env_file
     environment:
       <<: [*default-environment, *ices-environment]
       STREAM_MOUNTPOINT: /nightcore
