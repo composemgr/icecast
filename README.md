@@ -8,7 +8,7 @@ Icecast streaming server with two ices0 source streams
 
 ## 🚀 Services
 
-- **server**: libretime/icecast:latest
+- **server**: ghcr.io/binmgr/icecast:latest
 - **music**: ghcr.io/binmgr/ices0:latest
 - **nightcore**: ghcr.io/binmgr/ices0:latest
 
@@ -87,7 +87,8 @@ docker compose -f docker-compose.traefik.yaml --env-file .env up -d
 
 ## 📂 Volumes
 
-
+- `./volumes/config/{music,nightcore}` - Generated ices0 config
+- `./volumes/data/{music,nightcore}` - ices0 playlist and cue file
 - `/mnt/Music/Mp3` - Music stream media, read-only
 - `/mnt/Music/Nightcore` - Nightcore stream media, read-only
 
